@@ -8,7 +8,7 @@ and instantiates each one in a separate tab.  When the user clicks on a
 tab, it calls the class's runVisualization method.
 """
 
-import argparse, sys, re, webbrowser
+import argparse, sys, re, webbrowser, subprocess
 from tkinter import *
 from tkinter import ttk
 from PythonVisualizations import VisualizationApp
@@ -61,7 +61,10 @@ def showVisualizations(   # Display a set of VisualizationApps in a ttk.Notebook
                           padding=[12, TAB_FONT[1] * 5 // 8, 12, 2])
     notebook = ttk.Notebook(top)
     intro = ttk.Frame(notebook)
-    for line in intro_msg.split('\n'):
+    processOut = subprocess.run(['git', 'branch'], capture_output=True)
+    full_msg = intro_msg + "\n\n (Branch:" + processOut.stdout.decode(
+    ).strip() + ")"
+    for line in full_msg.split('\n'):
         URLs = [m for m in URL_pattern.finditer(line)]
         if URLs:
             frame = ttk.Frame(intro)
