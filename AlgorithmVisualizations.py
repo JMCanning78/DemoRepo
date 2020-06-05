@@ -65,8 +65,7 @@ def showVisualizations(   # Display a set of VisualizationApps in a ttk.Notebook
     current_branch = [
         line[1:] for line in processOut.stdout.decode().strip().split('\n')
         if line.startswith('*')]
-    full_msg = intro_msg + "\n\n (Branch:" + current_branch[0] + ")"
-    for line in full_msg.split('\n'):
+    for line in intro_msg.split('\n'):
         URLs = [m for m in URL_pattern.finditer(line)]
         if URLs:
             frame = ttk.Frame(intro)
@@ -87,6 +86,10 @@ def showVisualizations(   # Display a set of VisualizationApps in a ttk.Notebook
             frame.pack()
         else:
             ttk.Label(intro, text=line, font=INTRO_FONT).pack()
+    ttk.Label(intro, text="(Branch:" + current_branch[0] + ")",
+              font=INTRO_FONT[:1] + (10, 'italic'), foreground='blue').pack(
+                  side=BOTTOM)
+
     notebook.add(intro, state=NORMAL, text='Introduction', padding=8)
     for app in classes:
         if verbose > 1:
