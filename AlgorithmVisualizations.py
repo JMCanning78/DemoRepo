@@ -8,7 +8,7 @@ and instantiates each one in a separate tab.  When the user clicks on a
 tab, it calls the class's runVisualization method.
 """
 
-import argparse, sys, re, webbrowser, subprocess
+import argparse, sys, re, webbrowser
 from tkinter import *
 from tkinter import ttk
 from PythonVisualizations import VisualizationApp
