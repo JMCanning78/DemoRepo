@@ -63,6 +63,9 @@ class Chooser(VisualizationApp):
             for i in range(len(self.selectors)):
                 current[i]['start'] = float(current[i]['start'][-1])
                 current[i]['extent'] = float(current[i]['extent'][-1])
+                if i > 0 and current[i]['start'] < (
+                        current[i-1]['start'] + current[i-1]['extent']):
+                    current[i]['start'] += 360
                 on = self.selectors[i].get()
                 new[i]['start'] = angle
                 new[i]['extent'] = self.sliceAngle if on else 0
@@ -71,7 +74,7 @@ class Chooser(VisualizationApp):
                     
             # Animate change in slices
             self.startAnimations()
-            steps = max(1, int(self.sliceAngle))
+            steps = max(1, int(self.sliceAngle) // 2)
             for j in range(steps):
                 for i in range(len(self.selectors)):
                     on = self.selectors[i].get()
@@ -80,8 +83,9 @@ class Chooser(VisualizationApp):
                             self.canvas.tag_lower(label, self.bottom)
                     start = ((new[i]['start'] - current[i]['start']) * 
                              (j+1) / steps + current[i]['start'])
-                    extent = ((new[i]['extent'] - current[i]['extent']) * 
-                              (j+1) / steps + current[i]['extent'])
+                    extent = min(359.9,
+                                 ((new[i]['extent'] - current[i]['extent']) * 
+                                  (j+1) / steps + current[i]['extent']))
                     self.canvas.itemconfig(
                         self.slices[i], start = start, extent = extent)
                     if on:
@@ -99,11 +103,11 @@ class Chooser(VisualizationApp):
                 self.canvas.create_arc(
                     *subtract_vector(self.center, delta),
                     *add_vector(self.center, delta),
-                    start = i * self.sliceAngle, extent = self.sliceAngle,
+                    start = i * self.sliceAngle, 
+                    extent = min(359.9, self.sliceAngle),
                     fill = drawable.palette[
                         (self.nextColor + i) % len(drawable.palette)],
-                    style=PIESLICE, tags=['slice']
-                )
+                    style=PIESLICE, tags=['slice'])
                 for i, names in enumerate(self.choices)]
             self.sliceLabels = [
                 [self.canvas.create_text(
