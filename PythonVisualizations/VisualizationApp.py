@@ -134,7 +134,7 @@ class VisualizationApp(object): # Base class for Python visualizations
         self.fastLabel = Label(
             self.operationsLowerCenter, text="fast", font=CONTROLS_FONT)
         self.fastLabel.grid(row=0, column=2, sticky=W)
-        self.pauseButton = None
+        self.pauseButton, self.stopButton = None, None
         self.textEntries = []
         self.outputText = StringVar()
         self.outputText.set('')
@@ -436,6 +436,7 @@ class VisualizationApp(object): # Base class for Python visualizations
         if self.animationState == STOPPED: # a flag indicating if the user
             return True           # has stopped the animation
         if sleepTime > 0:
+            self.window.update()
             time.sleep(self.speed(sleepTime))
         return self.animationState == STOPPED
 
@@ -455,24 +456,27 @@ class VisualizationApp(object): # Base class for Python visualizations
         pauseButton['text'] = "Play"
         pauseButton['command'] = lambda: self.onClick(self.play, pauseButton)
         while self.animationState == PAUSED:
-            time.sleep(0.05)
-            self.window.update()
+            self.wait(0.05)
 
     def play(self, pauseButton):
         self.startAnimations()
         
     def startAnimations(self):
         self.animationState = RUNNING
-        self.pauseButton['text'] = 'Pause'
-        self.pauseButton['command'] = lambda: self.onClick(
+        if self.pauseButton:
+            self.pauseButton['text'] = 'Pause'
+            self.pauseButton['command'] = lambda: self.onClick(
             self.pause, self.pauseButton)
-        self.pauseButton['state'] = NORMAL
-        self.stopButton['state'] = NORMAL
+            self.pauseButton['state'] = NORMAL
+        if self.stopButton:
+            self.stopButton['state'] = NORMAL
 
     def stopAnimations(self):
         self.animationState = STOPPED
-        self.pauseButton['state'] = DISABLED
-        self.stopButton['state'] = DISABLED
+        if self.pauseButton:
+            self.pauseButton['state'] = DISABLED
+        if self.stopButton:
+            self.stopButton['state'] = DISABLED
 
     def pauseAnimations(self):
         self.animationState = PAUSED

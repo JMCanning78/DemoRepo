@@ -73,7 +73,7 @@ class Chooser(VisualizationApp):
     def makeButtons(self):
         self.chooseButton = self.addOperation(
            "Choose at random", self.spinAndChoose)
-        self.addAnimationButtons()
+        # self.addAnimationButtons()
         return [self.chooseButton]
      
     def rotateArrow(self, angle):
@@ -100,7 +100,6 @@ class Chooser(VisualizationApp):
                      self.canvas.itemconfig(
                         text, font=self.textFont + (
                            ('underline', 'bold') if i == selected else ()))
-               self.window.update()
                if self.wait(waitTime / steps):
                    break
             waitTime *= decay
