@@ -153,18 +153,19 @@ class VisualizationApp(object): # Base class for Python visualizations
             validationCmd=None, # Tk validation command tuple for argument
             helpText=None,   # Help text for argument (erased on first keypress)
             maxRows=4,       # Operations w/o args beyond maxRows -> new columns
+            buttonType=Button, # Button type: Button or Checkbutton
             **kwargs):       # Tk button keywoard args
         gridItems = gridDict(self.operations) # Operations inserted in grid
         nColumns, nRows = self.operations.grid_size()
         withArgument = [
             gridItems[0, row] for row in range(nRows)
-            if isinstance(gridItems[0, row], Button)]
+            if isinstance(gridItems[0, row], (Button, Checkbutton))]
         withoutArgument = [
             gridItems[col, row]
             for row in range(nRows) for col in range(4, nColumns)
-            if isinstance(gridItems[col, row], Button)]
-        button = Button(self.operations, text=label, command=callback,
-                        bg=OPERATIONS_BG)
+            if isinstance(gridItems[col, row], (Button, Checkbutton))]
+        button = buttonType(self.operations, text=label, command=callback,
+                            bg=OPERATIONS_BG, **kwargs)
         setattr(button, 'required_args', numArguments)
         if numArguments:
             while len(self.textEntries) < numArguments: # Build argument entry
