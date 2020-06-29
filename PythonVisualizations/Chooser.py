@@ -62,7 +62,7 @@ class Chooser(VisualizationApp):
         # Create arrow to spin on top of pie slices
         self.arrow = self.canvas.create_line(
            *self.center, *add_vector(self.center, (self.arrowLength, 0)),
-           arrow="last", width=6, fill="brown4")
+           arrow="last", width=6, fill="brown4", arrowshape=(16, 20, 6))
         self.angle = 0
 
         self.window.update()
