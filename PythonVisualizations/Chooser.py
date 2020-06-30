@@ -33,7 +33,7 @@ class Chooser(VisualizationApp):
         super().__init__(title=title, **kwargs)
         self.title = title
         self.choices = choices
-        self.speedScale.set(SPEED_SCALE_MAX)
+        self.speedScale.set(self.SPEED_SCALE_MAX)
         self.slices, self.sliceLabels, self.selectors = [], [], []
         self.bottom, self.arrow, self.cover = None, None, None
         self.buttons = self.makeButtons(choices)
@@ -182,7 +182,7 @@ class Chooser(VisualizationApp):
         waitTime = 0.0005
         decay = 1.15
         increment = random.randrange(25) + 15
-        while waitTime < 0.5 and self.animationState != STOPPED:
+        while waitTime < 0.5:
             steps = max(1, min(10, int(waitTime / 0.01)))
             for step in range(steps):
                self.rotateArrow(increment / steps)
