@@ -76,8 +76,25 @@ def move(event):
       canvas.move(item, dx, dy)
    move_start = (event.x, event.y)
 
+def move_to_top(tagOrId):
+   canvas.tag_raise(tagOrId, canvas.find_all()[-1])
+
+def move_to_bottom(tagOrId):
+   canvas.tag_lower(tagOrId, canvas.find_all()[0])
+
+def handle_raise(event):
+   for item in canvas.find_closest(event.x, event.y):
+      move_to_top(item)
+
+def handle_lower(event):
+   for item in canvas.find_closest(event.x, event.y):
+      move_to_bottom(item)
+
 # Attach callbacks for dragging circles
 canvas.tag_bind("circle", '<Button-1>', start_move)
 canvas.tag_bind("circle", '<B1-Motion>', move)
+for tag in ('circle', 'rectangle'):
+   canvas.tag_bind(tag, '<Double-Button-1>', handle_raise)
+   canvas.tag_bind(tag, '<Button-3>', handle_lower)
 
 window.mainloop()
