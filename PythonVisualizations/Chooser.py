@@ -30,21 +30,25 @@ class Chooser(VisualizationApp):
 
     def __init__(
             self, choices=['Yes', 'No', 'Maybe'], title="Chooser",
-            maxChoiceWidth=40, **kwargs):
+            maxChoiceWidth=40, minSpeed=360, maxSpeed=1200, decay=0.985, 
+            allowSpeedIndicator=True, **kwargs):
         super().__init__(title=title, **kwargs)
         self.title = title
         self.choices = choices
         self.maxChoiceWidth = maxChoiceWidth
+        self.minSpeed = minSpeed
+        self.maxSpeed = maxSpeed
+        self.decay = decay
         self.speedScale.set(self.SPEED_SCALE_MAX)
         self.slices, self.sliceLabels, self.selectors = [], [], []
         self.bottom, self.arrow, self.cover = None, None, None
-        self.buttons = self.makeButtons(choices)
+        self.buttons = self.makeButtons(choices, allowSpeedIndicator)
         self.display()
 
     def display(self):
         canvasDimensions = self.widgetDimensions(self.canvas)
         self.center = multiply_vector(canvasDimensions, 0.5)
-        self.radius = min(*self.center) * 9 / 10
+        self.radius = min(*self.center) * 98 / 100
         delta = (self.radius, self.radius)
         background = 'white'
         if self.bottom is None:
@@ -53,7 +57,7 @@ class Chooser(VisualizationApp):
                 *add_vector(self.center, delta), fill = background)
         self.angle = 0
         self.arrowLength = self.radius * 1 / 2
-        self.textRadius = self.radius * 2 / 3
+        self.textRadius = self.radius * 0.65
         nChoices = sum(selector.get() for selector in self.selectors)
         self.sliceAngle = 360 / max(1, nChoices)
         self.textFont = ('Arial', 14)
@@ -156,10 +160,27 @@ class Chooser(VisualizationApp):
                 if start <= self.angle and self.angle - start < extent:
                     return i
      
-    def makeButtons(self, choices):
+    def makeButtons(self, choices, allowSpeedIndicator=True):
         self.chooseButton = self.addOperation(
            "Choose at random", self.spinAndChoose)
         buttons = [self.chooseButton]
+        self.showSpeed = IntVar()
+        self.showSpeed.set(0)
+        if allowSpeedIndicator:
+            self.showSpeed.set(1)
+            self.showSpeedButton = self.addOperation(
+                "Show speed", lambda: 0, buttonType=Checkbutton, 
+                variable=self.showSpeed)
+            buttons.append(self.showSpeedButton)
+            
+            # For testing
+            if False:
+                self.addOperation(
+                    "Spin at {}".format(self.minSpeed),
+                    lambda: self.spinAndChoose(self.minSpeed))
+                self.addOperation(
+                    "Spin at {}".format(self.maxSpeed),
+                    lambda: self.spinAndChoose(self.maxSpeed))
         self.selectors = []
         for choice in choices:
            stateVar = IntVar()
@@ -179,28 +200,34 @@ class Chooser(VisualizationApp):
            *add_vector(self.center, 
                        rotate_vector((self.arrowLength, 0), self.angle)))
         
-    def spinAndChoose(self):
+    def spinAndChoose(self, speed=None):
         self.startAnimations()
-        waitTime = 0.0005
-        decay = 1.15
-        increment = random.randrange(25) + 15
-        while waitTime < 0.5:
-            steps = max(1, min(10, int(waitTime / 0.01)))
-            for step in range(steps):
-               self.rotateArrow(increment / steps)
-               selected = self.selectedIndex()
-               for i, texts in enumerate(self.sliceLabels):
-                  for text in texts:
-                     self.canvas.itemconfig(
+        waitTime = 0.01
+        if speed is None:
+            speed = random.randrange(self.minSpeed, self.maxSpeed)
+        if self.showSpeed.get():
+            speedIndicator = self.canvas.create_text(
+                30, 30, text="Speed = {}".format(speed), anchor=NW)
+        while speed * waitTime > 0.1:
+            self.rotateArrow(speed * waitTime)
+            selected = self.selectedIndex()
+            for i, texts in enumerate(self.sliceLabels):
+                for text in texts:
+                    self.canvas.itemconfig(
                         text, font=self.textFont + (
-                           ('underline', 'bold') if i == selected else ()))
-               if self.wait(waitTime / steps):
-                   break
-            waitTime *= decay
+                            ('underline', 'bold') if i == selected else ()))
+            if self.wait(waitTime):
+                break
+            speed *= self.decay
+            if self.showSpeed.get():
+                self.canvas.itemconfigure(
+                    speedIndicator, text = "Speed = {:5.2f}".format(speed))
         self.setMessage(
            '{} {} chosen!'.format(
               ', '.join(self.choices[selected]),
               'is' if len(self.choices[selected]) == 1 else 'are'))
+        if self.showSpeed.get():
+            self.canvas.delete(speedIndicator)
         self.stopAnimations()
 
     def enableButtons(self, enable=True):
@@ -217,12 +244,26 @@ if __name__ == '__main__':
         metavar='CHOICE',
         help='Choice description.  Use comma to separate lines.')
     parser.add_argument(
+        '--min-speed', default=600, type=int,
+        help='Minimum angular speed of spin at start in degrees / second')
+    parser.add_argument(
+        '--max-speed', default=1800, type=int,
+        help='Maximum angular speed of spin at start in degrees / second')
+    parser.add_argument(
+        '-d', '--decay', default=0.985, type=float,
+        help='Decay rate of spin speed.')
+    parser.add_argument(
+        '-v', '--speed-visible', default=False, action='store_true',
+        help='Add button to allow speed to visible while spinning')
+    parser.add_argument(
         '-m', '--max-choice-width', default=40, type=int,
         help='Maximum number of characters in choice button label.')
 
     args = parser.parse_args()
 
     args.choices = [choice.split(',') for choice in args.choices]
-    chooser = Chooser(args.choices, maxChoiceWidth=args.max_choice_width)
+    chooser = Chooser(args.choices, maxChoiceWidth=args.max_choice_width,
+                      minSpeed=args.min_speed, maxSpeed=args.max_speed,
+                      decay=args.decay, allowSpeedIndicator=args.speed_visible)
 
     chooser.runVisualization()
