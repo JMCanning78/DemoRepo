@@ -1,4 +1,4 @@
-import random
+import random, argparse
 from tkinter import *
 try:
     from drawable import *
@@ -7,9 +7,9 @@ except ModuleNotFoundError:
     from .drawable import *
     from .VisualizationApp import *
 
-def abbreviateChoiceName(choice):
+def abbreviateChoiceName(choice, maxChoiceWidth=20):
     fullname = ', '.join(choice) if isinstance(choice, list) else choice
-    if len(fullname) < 20:
+    if len(fullname) < maxChoiceWidth:
         return fullname
     last = None
     name = ''
@@ -29,10 +29,12 @@ class Chooser(VisualizationApp):
     nextColor = 0
 
     def __init__(
-            self, choices=['Yes', 'No', 'Maybe'], title="Chooser", **kwargs):
+            self, choices=['Yes', 'No', 'Maybe'], title="Chooser",
+            maxChoiceWidth=40, **kwargs):
         super().__init__(title=title, **kwargs)
         self.title = title
         self.choices = choices
+        self.maxChoiceWidth = maxChoiceWidth
         self.speedScale.set(self.SPEED_SCALE_MAX)
         self.slices, self.sliceLabels, self.selectors = [], [], []
         self.bottom, self.arrow, self.cover = None, None, None
@@ -164,7 +166,7 @@ class Chooser(VisualizationApp):
            self.selectors.append(stateVar)
            stateVar.set(1)
            buttons.append(self.addOperation(
-              abbreviateChoiceName(choice), self.display, 
+              abbreviateChoiceName(choice, self.maxChoiceWidth), self.display, 
               buttonType=Checkbutton, variable=stateVar))
         return buttons
     
@@ -206,9 +208,21 @@ class Chooser(VisualizationApp):
             btn.config(state=NORMAL if enable else DISABLED)
 
 if __name__ == '__main__':
-    choices = (
-        [arg.split(',') for arg in sys.argv[1:]] if len(sys.argv) >= 3
-        else [ ['Yes'], ['No'], ['Maybe'] ])
-    chooser = Chooser(choices)
+    parser = argparse.ArgumentParser(
+        description='Visual application to select a choice randomly using a '
+        'spinner.',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument(
+        'choices', nargs='*', default=[ 'Yes', 'No', 'Maybe' ],
+        metavar='CHOICE',
+        help='Choice description.  Use comma to separate lines.')
+    parser.add_argument(
+        '-m', '--max-choice-width', default=40, type=int,
+        help='Maximum number of characters in choice button label.')
+
+    args = parser.parse_args()
+
+    args.choices = [choice.split(',') for choice in args.choices]
+    chooser = Chooser(args.choices, maxChoiceWidth=args.max_choice_width)
 
     chooser.runVisualization()
