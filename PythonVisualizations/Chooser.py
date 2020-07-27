@@ -224,8 +224,9 @@ class Chooser(VisualizationApp):
                     speedIndicator, text = "Speed = {:5.2f}".format(speed))
         self.setMessage(
            '{} {} chosen!'.format(
-              ', '.join(self.choices[selected]),
-              'is' if len(self.choices[selected]) == 1 else 'are'))
+              'None' if selected is None else ', '.join(self.choices[selected]),
+              'is' if selected is not None and len(self.choices[selected]) == 1
+               else 'are'))
         if self.showSpeed.get():
             self.canvas.delete(speedIndicator)
         self.stopAnimations()
