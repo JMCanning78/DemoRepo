@@ -1,5 +1,6 @@
 import random, argparse
 from tkinter import *
+from collections import *
 try:
     from drawable import *
     from VisualizationApp import *
@@ -200,40 +201,51 @@ class Chooser(VisualizationApp):
            *add_vector(self.center, 
                        rotate_vector((self.arrowLength, 0), self.angle)))
         
-    def spinAndChoose(self, speed=None):
+    def spinAndChoose(
+            self, startAt=None, waitTime=0.01, speed=None, animate=True):
         self.startAnimations()
-        waitTime = 0.01
         if speed is None:
             speed = random.randrange(self.minSpeed, self.maxSpeed)
-        if self.showSpeed.get():
+        if startAt is not None:
+            self.rotateArrow(startAt - self.angle)
+        if animate and self.showSpeed.get():
             speedIndicator = self.canvas.create_text(
                 30, 30, text="Speed = {}".format(speed), anchor=NW)
+        selected = self.selectedIndex()
         while speed * waitTime > 0.1:
             self.rotateArrow(speed * waitTime)
             selected = self.selectedIndex()
-            for i, texts in enumerate(self.sliceLabels):
-                for text in texts:
-                    self.canvas.itemconfig(
-                        text, font=self.textFont + (
-                            ('underline', 'bold') if i == selected else ()))
-            if self.wait(waitTime):
-                break
             speed *= self.decay
-            if self.showSpeed.get():
-                self.canvas.itemconfigure(
-                    speedIndicator, text = "Speed = {:5.2f}".format(speed))
+            if animate:
+                for i, texts in enumerate(self.sliceLabels):
+                    for text in texts:
+                        self.canvas.itemconfig(
+                            text, font=self.textFont + (
+                                ('underline', 'bold') if i == selected else ()))
+                self.wait(waitTime)
+                if self.showSpeed.get():
+                    self.canvas.itemconfigure(
+                        speedIndicator, text = "Speed = {:5.2f}".format(speed))
+        chosen = [] if selected is None else self.choices[selected]
         self.setMessage(
            '{} {} chosen!'.format(
-              'None' if selected is None else ', '.join(self.choices[selected]),
-              'is' if selected is not None and len(self.choices[selected]) == 1
-               else 'are'))
-        if self.showSpeed.get():
+              'None' if selected is None else ', '.join(chosen),
+              'is' if len(chosen) == 1 else 'are'))
+        if animate and self.showSpeed.get():
             self.canvas.delete(speedIndicator)
         self.stopAnimations()
+        return chosen
 
     def enableButtons(self, enable=True):
         for btn in self.buttons:
             btn.config(state=NORMAL if enable else DISABLED)
+
+    def choiceStatistics(self, numTrials=100, startAt=None):
+        results = defaultdict(lambda: 0)
+        for trial in range(numTrials):
+            results[tuple(self.spinAndChoose(
+                startAt=startAt, animate=False))] += 1
+        return results
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
